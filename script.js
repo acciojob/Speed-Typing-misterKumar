@@ -1,65 +1,75 @@
 //your JS code here. If required.
-async function getRandomQuote() {
-  const response = await fetch("http://api.quotable.io/random");
-  const data = await response.json();
-  return data.content;
-}
-
-const quoteDisplayElement = document.getElementById("quote");
-const quoteInputElement = document.getElementById("quoteInput");
-const timerElement = document.querySelector(".timer");
-let startTime, timerInterval;
-
-function startTimer() {
-  timerInterval = setInterval(() => {
-    const elapsedTime = new Date(Date.now() - startTime);
-    const minutes = elapsedTime.getMinutes().toString().padStart(2, "0");
-    const seconds = elapsedTime.getSeconds().toString().padStart(2, "0");
-    const milliseconds = elapsedTime.getMilliseconds().toString().padStart(3, "0");
-    timerElement.textContent = `${minutes}:${seconds}:${milliseconds}`;
-  }, 10);
-}
-
-async function renderNewQuote() {
-  const quote = await getRandomQuote();
-  quoteDisplayElement.innerHTML = "";
-  quote.split("").forEach(character => {
-    const characterSpan = document.createElement("span");
-    characterSpan.innerText = character;
-    quoteDisplayElement.appendChild(characterSpan);
-  });
-  quoteInputElement.value = null;
-  startTimer();
-}
-
-function stopTimer() {
-  clearInterval(timerInterval);
-  timerElement.textContent = "00:00:00";
-}
-
-renderNewQuote();
-
-quoteInputElement.addEventListener("input", () => {
-  const quoteArray = quoteDisplayElement.querySelectorAll("span");
-  const inputArray = quoteInputElement.value.split("");
-  let correct = true;
-  quoteArray.forEach((characterSpan, index) => {
-    const character = inputArray[index];
-    if (character == null) {
-      characterSpan.classList.remove("correct");
-      characterSpan.classList.remove("incorrect");
-      correct = false;
-    } else if (character === characterSpan.innerText) {
-      characterSpan.classList.add("correct");
-      characterSpan.classList.remove("incorrect");
-    } else {
-      characterSpan.classList.remove("correct");
-      characterSpan.classList.add("incorrect");
-      correct = false;
+    function fetchRandomQuote() {
+      fetch('http://api.quotable.io/random')
+        .then(response => response.json())
+        .then(data => {
+          
+          const quoteDisplay = document.querySelector('.quote-display');
+          quoteDisplay.textContent = data.content;
+        })
+        .catch(error => {
+          console.log('Error fetching quote:', error);
+        });
     }
-  });
-  if (correct) {
-    stopTimer();
-    setTimeout(renderNewQuote, 3000);
-  }
-});
+
+    
+    function clearInputAndResetTimer() {
+      const quoteInput = document.getElementById('quoteInput');
+      quoteInput.value = '';
+      startTimer();
+    }
+
+    function checkTypingAccuracy() {
+      const quoteInput = document.getElementById('quoteInput');
+      const quoteDisplay = document.querySelector('.quote-display');
+      const typedText = quoteInput.value;
+      const quoteText = quoteDisplay.textContent;
+
+      for (let i = 0; i < typedText.length; i++) {
+        if (typedText[i] === quoteText[i]) {
+          quoteInput.classList.add('correct');
+          quoteInput.classList.remove('incorrect');
+        } else {
+          quoteInput.classList.add('incorrect');
+          quoteInput.classList.remove('correct');
+          return;
+        }
+      }
+
+      if (typedText.length === quoteText.length) {
+    
+        quoteInput.classList.add('correct');
+        quoteInput.classList.remove('incorrect');
+        stopTimer();
+        setTimeout(clearInputAndResetTimer, 3000);
+        fetchRandomQuote();
+      }
+    }
+
+    let startTime;
+    let timerInterval;
+
+    
+    function startTimer() {
+      startTime = Date.now();
+      timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    
+    function stopTimer() {
+      clearInterval(timerInterval);
+    }
+function updateTimer() {
+  const timer = document.querySelector('.timer');
+  const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+  timer.textContent = elapsedTime;
+}
+
+
+    
+    const quoteInput = document.getElementById('quoteInput');
+    quoteInput.addEventListener('input', checkTypingAccuracy);
+
+    
+    fetchRandomQuote();
+    startTimer();
